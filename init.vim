@@ -1,14 +1,15 @@
 :set number
 :set relativenumber
 :set autoindent
+:set expandtab
 :set tabstop=4
 :set shiftwidth=4
 :set smarttab
 :set softtabstop=4
-:set mouse=a 
+:set mouse=a
 set redrawtime=10000
 
-call plug#begin('../nvim_plugged')
+call plug#begin()
 
 Plug 'http://github.com/tpope/vim-surround'
 Plug 'https://github.com/preservim/nerdtree'
@@ -28,7 +29,6 @@ Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
 Plug 'junegunn/fzf.vim'
 Plug 'voldikss/vim-floaterm'
 Plug 'folke/tokyonight.nvim', { 'branch': 'main' }
-Plug 'cdelledonne/vim-cmake'
 Plug 'antoinemadec/FixCursorHold.nvim'
 Plug 'tribela/vim-transparent'
 Plug 'sbdchd/neoformat'
@@ -36,6 +36,8 @@ Plug 'prettier/vim-prettier', { 'do': 'yarn install --frozen-lockfile --producti
 Plug 'dracula/vim', { 'as': 'dracula' }
 Plug 'sonph/onehalf', { 'rtp': 'vim' }
 Plug 'bluz71/vim-nightfly-guicolors'
+Plug 'glepnir/dashboard-nvim'
+Plug 'EdenEast/nightfox.nvim'
 
 call plug#end()
 
@@ -71,12 +73,9 @@ nnoremap <leader>p :PrettierPartial<CR>
 " shortcut prettier
 nnoremap <leader>P :Prettier<CR>
 
-" shortcut to cmakegenrate
-nnoremap <leader>g :CMakeGenerate<CR>
-" shortcut to cmakebuild
-nnoremap <leader>b :CMakeBuild<CR>
-" shortcut to run program with cmake
-nnoremap <leader>r :CMakeRun<CR>
+
+" shortcut to comment out highlighted text
+vnoremap <leader>c :Commentary<CR>
 
 " Highlight the symbol and its references when holding the cursor.
 autocmd CursorHold * silent call CocActionAsync('highlight')
@@ -95,17 +94,17 @@ syntax on
 set t_Co=256
 
 " set termguicolors
-set termguicolors
+if exists('+termguicolors')
+  let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+  let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+  set termguicolors
+endif
 
 " theme settings
+syntax on
+set t_Co=256
+set cursorline
 colorscheme nightfly
-let g:airline_theme='nightfly'
-" lightline
-let g:lightline = { 'colorscheme': 'nightfly' }
-let g:nightflyCursorColor = v:true
-let g:nightflyNormalFloat = v:true
-let g:nightflyTransparent = v:true
-
 
 lua << EOF
 require("bufferline").setup{}
@@ -115,6 +114,11 @@ let NerdTreeShowHidden=1
 
 let g:NERDTreeDirArrowExpandable="+"
 let g:NERDTreeDirArrowCollapsible="~"
-let g:cmake_link_compile_commands = 1
 
+" Configure dashboard-nvim with ffz
+let g:dashboard_default_executive = 'telescope'
+nnoremap <silent> <Leader>fh :DashboardFindHistory<CR>
+nnoremap <silent> <Leader>ct :DashboardChangeColorscheme<CR>
+nnoremap <silent> <Leader>fm :DashboardJumpMark<CR>
+nnoremap <silent> <Leader>nf :DashboardNewFile<CR>
 
