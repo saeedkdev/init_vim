@@ -1,4 +1,3 @@
-:set number
 :set relativenumber
 :set autoindent
 :set expandtab
@@ -38,6 +37,10 @@ Plug 'sonph/onehalf', { 'rtp': 'vim' }
 Plug 'bluz71/vim-nightfly-guicolors'
 Plug 'glepnir/dashboard-nvim'
 Plug 'EdenEast/nightfox.nvim'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-lua/plenary.nvim'
+Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.1' }
+Plug 'neovim/nvim-lspconfig'
 
 call plug#end()
 
@@ -45,8 +48,17 @@ nnoremap <C-f> :NERDTreeFocus<CR>
 nnoremap <C-n> :NERDTree<CR>
 nnoremap <C-t> :NERDTreeToggle<CR>
 
-nnoremap <C-p> :FZF<CR>
-nnoremap <leader>f :Rg<CR>
+nnoremap <C-p> :Telescope find_files<CR>
+"nnoremap <leader>f :Telescope live_grep<CR>
+
+lua << EOF
+    local builtin = require('telescope.builtin')
+    vim.keymap.set('n', '<leader>f', function() builtin.grep_string({ search = vim.fn.input('Grep > ') }) end)
+EOF
+
+" copy to clipboard in visual mode
+vnoremap <C-c> "+y
+
 nnoremap <S-l> :BufferLineCycleNext<CR>
 nnoremap <S-h> :BufferLineCyclePrev<CR>
 
@@ -58,6 +70,21 @@ nnoremap <F6> :FloatermNew --wintype=normal --width=0.8 --height=0.8 --position=
 
 nmap <F8> :TagbarToggle<CR>
 nmap <silent> gd <Plug>(coc-definition)
+
+" nvim-treesitter
+lua << EOF
+    require'nvim-treesitter.configs'.setup {
+        ensure_installed = { "javascript", "typescript", "tsx", "html", "css", "json", "lua", "python", "bash", "c", "cpp", "java", "go", "rust", "toml", "yaml", "jsonc", "regex", "graphql", "php", "ruby", "vue", "vim"},
+
+        sync_install = true,
+
+        auto_install = true,
+
+        highlight = {
+            enable = true,
+        },
+    }
+EOF
 
 " split keybindings
 set splitbelow splitright
@@ -104,21 +131,67 @@ endif
 syntax on
 set t_Co=256
 set cursorline
-colorscheme nightfly
+colorscheme dracula
 
 lua << EOF
-require("bufferline").setup{}
-EOF
+    require("bufferline").setup{}
 
-let NerdTreeShowHidden=1
+    vim.api.nvim_set_hl(0, "Normal", {bg = "none" })
+    vim.api.nvim_set_hl(0, "NormalFloat", {bg = "none" })
+
+EOF
 
 let g:NERDTreeDirArrowExpandable="+"
 let g:NERDTreeDirArrowCollapsible="~"
 
-" Configure dashboard-nvim with ffz
-let g:dashboard_default_executive = 'telescope'
-nnoremap <silent> <Leader>fh :DashboardFindHistory<CR>
-nnoremap <silent> <Leader>ct :DashboardChangeColorscheme<CR>
-nnoremap <silent> <Leader>fm :DashboardJumpMark<CR>
-nnoremap <silent> <Leader>nf :DashboardNewFile<CR>
+let g:LanguageClient_serverCommands = {
+\ 'rust': ['rust-analyzer'],
+\ }
 
+" NERDTree settings show . hidden files
+let NERDTreeShowHidden=1
+
+lua << EOF
+    local nvim_lsp = require'lspconfig'
+
+    nvim_lsp.rust_analyzer.setup({
+        on_attach=on_attach,
+        settings = {
+            ["rust-analyzer"] = {
+                imports = {
+                    granularity = {
+                        group = "module",
+                    },
+                    prefix = "self",
+                },
+                cargo = {
+                    buildScripts = {
+                        enable = true,
+                    },
+                },
+                procMacro = {
+                    enable = true
+                },
+            }
+        }
+    })
+    nvim_lsp.intelephense.setup({
+        on_attach=on_attach,
+        settings = {
+            intelephense = {
+                environment = {
+                    phpVersion = "8.0"
+                },
+                stubs = {
+                    bundled = true,
+                    composer = true,
+                    extensions = true,
+                    "wordpress",
+                    "laravel",
+                    "codeigniter",
+                    "perfex_crm",
+                }
+            }
+        }
+    })
+EOF
